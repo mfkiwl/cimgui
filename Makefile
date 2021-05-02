@@ -1,33 +1,35 @@
 #
 # Cross Platform Makefile
-# Compatible with Ubuntu 14.04.1 and Mac OS X
+# Compatible with Ubuntu 14.04.1 and macOS
 
 OBJS = cimgui.o
-OBJS += fontAtlas.o
-OBJS += drawList.o
-OBJS += listClipper.o
-#OBJS += test.o
-OBJS += ../imgui/imgui.o
-OBJS += ../imgui/imgui_draw.o
-OBJS += ../imgui/imgui_demo.o
+OBJS += ./imgui/imgui.o
+OBJS += ./imgui/imgui_draw.o
+OBJS += ./imgui/imgui_demo.o
+OBJS += ./imgui/imgui_tables.o
+OBJS += ./imgui/imgui_widgets.o
+
+CXXFLAGS=-O2 -fno-exceptions -fno-rtti
 
 UNAME_S := $(shell uname -s)
+
+AR := ar -rc
 
 ifeq ($(UNAME_S), Linux) #LINUX
 	ECHO_MESSAGE = "Linux"
 
 	OUTPUTNAME = cimgui.so
-	CXXFLAGS = -I../../
+	CXXFLAGS += -I./imgui/
 	CXXFLAGS += -Wall
 	CXXFLAGS += -shared -fPIC
 	CFLAGS = $(CXXFLAGS)
 endif
 
 ifeq ($(UNAME_S), Darwin) #APPLE
-	ECHO_MESSAGE = "Mac OS X"
+	ECHO_MESSAGE = "macOS"
 
 	OUTPUTNAME = cimgui.dylib
-	CXXFLAGS = -I/usr/local/include
+	CXXFLAGS += -I/usr/local/include
 	CXXFLAGS += -Wall
 	LINKFLAGS = -dynamiclib
 	CFLAGS = $(CXXFLAGS)
@@ -37,7 +39,7 @@ ifeq ($(OS), Windows_NT)
 	ECHO_MESSAGE = "Windows"
 
 	OUTPUTNAME = cimgui.dll
-	CXXFLAGS = -I../../
+	CXXFLAGS += -I./imgui/
 	CXXFLAGS += -Wall
 	CXXFLAGS += -shared
 	LINKFLAGS = -limm32
@@ -47,11 +49,21 @@ endif
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-all:imgui_example
+all:$(OUTPUTNAME)
 	@echo Build complete for $(ECHO_MESSAGE)
 
-imgui_example:$(OBJS)
+static:$(OBJS)
+	$(AR) libcimgui.a $(OBJS)
+
+$(OUTPUTNAME):$(OBJS)
 	$(CXX) -o $(OUTPUTNAME) $(OBJS) $(CXXFLAGS) $(LINKFLAGS)
 
 clean:
-	rm $(OBJS)
+	rm -f $(OBJS)
+
+fclean: clean
+	rm -f $(OUTPUTNAME)
+
+re: fclean all
+
+.PHONY: all clean fclean re static
